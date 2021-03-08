@@ -1,100 +1,85 @@
 const express = require('express')
 const app = express()
 
-// Database
+// Parse incoming requests with JSON payload
+app.use(express.json())
+
+// Fake Database of songs
 const songs = [
   {
     id: 1,
-    title: 'Mi piacciono i broccoli!!!!',
+    title: 'I love clean code',
     author: 'Tia',
   },
   {
     id: 2,
-    title: 'Mi piacciono i draghi',
+    title: 'I love dragons',
     author: 'Rompa',
   },
   {
     id: 3,
-    title: 'Mi piacciono i coltelli',
-    author: 'Valdoz',
-  },
-  {
-    id: 4,
-    title: 'New song!!',
+    title: 'I love blockchain',
     author: 'Valdoz',
   },
 ]
 
-// REST API
-
-const port = process.env.PORT || 5000
-
-app.use(express.json())
-
-// Routes
-
-// GET: /songs -> restituisce tutte le canzoni
+// Get all songs
 app.get('/songs', (req, res) => {
   res.status(200).json(songs)
 })
 
-// GET: /song/:id -> restituisce la canzone con id
+// Get a song by id
 app.get('/song/:id', (req, res) => {
   const id = parseInt(req.params.id)
 
-  const mysong = songs.find((obj) => obj.id === id)
+  const song = songs.find((s) => s.id === id)
 
-  if (!mysong) res.status(404).send(`Song not found with id: ${id}`)
+  if (!song) res.status(404).send(`No song found with id: ${id}`)
 
-  res.status(200).json(mysong)
+  res.status(200).json(song)
 })
 
-app.post('/song', (req, res) => {
+// Create new song with given title and author
+app.post('/songs', (req, res) => {
   const { title, author } = req.body
 
-  // Gestire dati non presenti
   if (!title || !author)
     return res.status(400).send('Title or author not provided')
 
-  // Aggiungere la canzone
-  const lastsong = songs[songs.length - 1]
+  const lastId = songs[songs.length - 1].id
 
   const newsong = {
-    id: lastsong.id + 1,
+    id: lastId + 1,
     title,
     author,
   }
 
   songs.push(newsong)
 
-  // Restituire una risposta
   res
     .status(200)
-    .send(`Inserted song with title: ${title} and author: ${author}`)
+    .send(`Created new song with title: ${title}, and author: ${author}`)
 })
 
+// Modify a song by id, given a new title
 app.patch('/song/:id', (req, res) => {
   const { title } = req.body
-  if (!title) return res.status(400).send('Missing title')
+
+  if (!title)
+    return res.status(400).send('Please provide a new title for the song')
 
   const id = parseInt(req.params.id)
 
-  const oldsong = songs.find((s) => s.id === id)
-  if (!oldsong) return res.status(404).send(`No song found with id: ${id}`)
+  const song = songs.find((s) => s.id === id)
+  if (!song) return res.status(404).send(`No song found with id: ${id}`)
 
-  oldsong.title = title
+  song.title = title
 
-  return res.status(200).json(oldsong)
+  return res.status(200).json(song)
 })
+
+const port = process.env.PORT || 5000
 
 app.listen(port, () => {
   console.log(`Server started on port ${port}`)
 })
-
-// STATUS:
-// 200: OK
-// 404: Not Found
-// 400: Bad Request
-// 401: Unauthorized
-// 403: Forbidden
-// 500: Internal Server Error
